@@ -12,7 +12,7 @@
 
 The **Decision Assurance Layer (DAL)** is a prototype that inserts a structured accountability checkpoint between AI-generated threat recommendations and human SOC analyst decisions.
 
-The AI analyses the alert. The analyst reviews the evidence and AI output side-by-side. They make an explicit **Approve / Reject / Override** decision with a documented rationale. An immutable, SHA-256-hashed `DecisionRecord` is saved to IBM Cloud Object Storage.
+The AI analyzes the alert. The analyst reviews the evidence and AI output side-by-side. They make an explicit **Approve / Reject / Override** decision with a documented rationale. A tamper-evident, SHA-256-hashed `DecisionRecord` is saved to IBM Cloud Object Storage or local fallback storage.
 
 Every record captures five elements — none are optional:
 
@@ -33,12 +33,13 @@ Every record captures five elements — none are optional:
 git clone <repo-url>
 cd IBM-AI-builders-challenge-lab-july-main
 
-# 2. Install dependencies (Python 3.10+)
-pip install -r requirements.txt
+# 2. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-# 3. Configure credentials (optional — demo mode works without them)
-cp .env.example .env
-# Edit .env with your IBM credentials
+# 3. Install dependencies
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 
 # 4. Run
 streamlit run app.py
