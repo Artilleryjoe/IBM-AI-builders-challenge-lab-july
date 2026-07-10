@@ -161,7 +161,7 @@ Both IBM services degrade gracefully — the app runs fully offline with mock re
 ## Built With
 
 - [IBM watsonx.ai](https://www.ibm.com/products/watsonx-ai) — Granite model for AI recommendation generation
-- [IBM Cloud Object Storage](https://www.ibm.com/cloud/object-storage) — Immutable audit record persistence
+- [IBM Cloud Object Storage](https://www.ibm.com/cloud/object-storage) — Tamper-evident audit record persistence
 - [IBM Bob](https://www.ibm.com/) — Used for planning, documentation, and code implementation throughout
 - [Streamlit](https://streamlit.io/) — Analyst workbench UI
 
