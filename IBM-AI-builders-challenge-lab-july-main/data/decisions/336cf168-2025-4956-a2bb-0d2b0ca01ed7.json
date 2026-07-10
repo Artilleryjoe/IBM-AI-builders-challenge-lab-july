@@ -1,0 +1,17 @@
+{
+  "ai_confidence": 0.71,
+  "ai_reasoning": "Three accounts compromised during spray.",
+  "ai_recommendation": "investigate",
+  "ai_suggested_actions": [
+    "Force password reset"
+  ],
+  "analyst_action": "override",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "Treating as confirmed breach.",
+  "override_description": "Blocking source IP and forcing reset for all three accounts immediately.",
+  "record_hash": "91b36442b6b49556245e2af827a5c6435db2135ddda095a61cf1ac3822c14dd5",
+  "record_id": "336cf168-2025-4956-a2bb-0d2b0ca01ed7",
+  "scenario_id": "scenario_003",
+  "scenario_title": "Credential Stuffing - VPN Gateway",
+  "timestamp": "2026-07-10T04:45:49.024849+00:00"
+}

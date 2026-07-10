@@ -1,0 +1,19 @@
+{
+  "ai_confidence": 0.96,
+  "ai_reasoning": "The sequence of PowerShell execution policy bypass, payload download from a known Tor exit node, shadow copy deletion, recovery disablement, and rapid file encryption with ransom note creation is definitive ransomware execution. Containment is urgent \u2014 the encryption is already in progress.",
+  "ai_recommendation": "escalate",
+  "ai_suggested_actions": [
+    "Immediately isolate SRV-FILE-201 from all network segments",
+    "Activate the ransomware incident response playbook and notify IR leadership",
+    "Preserve forensic image of SRV-FILE-201 before any remediation"
+  ],
+  "analyst_action": "override",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "Going harder than AI suggests.",
+  "override_description": "Activating full DR plan, not just IR.",
+  "record_hash": "1e29fcc4c0eba1d10756fbab5d27bf2d5513fcb92ba47c40c5301ea53064bf90",
+  "record_id": "34aae5ef-df38-49a2-9817-ea83e7aafadf",
+  "scenario_id": "scenario_002",
+  "scenario_title": "Ransomware Precursor \u2014 Suspicious Script Execution and Shadow Copy Deletion",
+  "timestamp": "2026-07-10T04:55:32.521359+00:00"
+}

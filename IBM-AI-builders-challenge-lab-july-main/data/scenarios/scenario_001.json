@@ -1,0 +1,28 @@
+{
+  "id": "scenario_001",
+  "title": "Lateral Movement via SMB — Internal Subnet Sweep",
+  "severity": "HIGH",
+  "alert_type": "Lateral Movement",
+  "mitre_tactic": "TA0008 - Lateral Movement",
+  "mitre_technique": "T1021.002 — Remote Services: SMB/Windows Admin Shares",
+  "source_ip": "10.0.4.88",
+  "destination_ip": "10.0.4.0/24",
+  "timestamp": "2025-07-14T02:17:43Z",
+  "affected_host": "WS-FINANCE-088",
+  "raw_evidence": [
+    "2025-07-14T02:17:43Z — Host 10.0.4.88 initiated SMB connections to 24 hosts in 10.0.4.0/24 over 90 seconds.",
+    "2025-07-14T02:17:51Z — Successful authentication to \\\\10.0.4.12\\ADMIN$ using domain account svc_backup (not normally active after 22:00).",
+    "2025-07-14T02:18:03Z — PsExec artefact (PSEXESVC.exe) written to C:\\Windows\\System32 on 10.0.4.12.",
+    "2025-07-14T02:18:09Z — cmd.exe spawned as child of PSEXESVC.exe on 10.0.4.12; command: whoami /all && net localgroup administrators.",
+    "2025-07-14T02:18:22Z — EDR telemetry: credential dump attempt detected on 10.0.4.12 (lsass.exe accessed by non-system process).",
+    "2025-07-14T02:18:44Z — svc_backup account authenticated to 3 additional hosts: 10.0.4.31, 10.0.4.55, 10.0.4.67.",
+    "2025-07-14T02:19:01Z — No prior subnet sweep behaviour observed for 10.0.4.88 in the last 90 days."
+  ],
+  "context": {
+    "user_account": "svc_backup",
+    "account_type": "service account",
+    "normal_working_hours": "08:00–18:00 UTC",
+    "prior_alerts_on_source": 0,
+    "asset_criticality_destination": "HIGH — finance workstations"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "ai_confidence": 0.87,
+  "ai_reasoning": "Multiple indicators of active lateral movement.",
+  "ai_recommendation": "escalate",
+  "ai_suggested_actions": [
+    "Isolate 10.0.4.88",
+    "Reset svc_backup"
+  ],
+  "analyst_action": "approve",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "Concur with AI \u2014 escalating to IR.",
+  "override_description": null,
+  "record_hash": "0fd0d05dfc0e914f21ca0e876249e32c8f3aa5c9faedde7c70184850e39bc6b8",
+  "record_id": "31bd4506-565b-40f4-bb93-daedb0b4eb6d",
+  "scenario_id": "scenario_001",
+  "scenario_title": "Lateral Movement via SMB - Internal Subnet Sweep",
+  "timestamp": "2026-07-10T04:45:48.997190+00:00"
+}

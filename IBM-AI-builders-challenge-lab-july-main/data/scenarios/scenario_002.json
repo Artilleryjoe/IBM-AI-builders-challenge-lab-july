@@ -1,0 +1,30 @@
+{
+  "id": "scenario_002",
+  "title": "Ransomware Precursor — Suspicious Script Execution and Shadow Copy Deletion",
+  "severity": "CRITICAL",
+  "alert_type": "Ransomware Precursor",
+  "mitre_tactic": "TA0040 — Impact",
+  "mitre_technique": "T1490 - Inhibit System Recovery",
+  "source_ip": "10.1.2.201",
+  "destination_ip": "N/A",
+  "timestamp": "2025-07-14T11:34:07Z",
+  "affected_host": "SRV-FILE-201",
+  "raw_evidence": [
+    "2025-07-14T11:34:07Z — PowerShell execution policy bypass: powershell.exe -ExecutionPolicy Bypass -File C:\\Users\\jdoe\\AppData\\Local\\Temp\\upd8.ps1",
+    "2025-07-14T11:34:09Z — upd8.ps1 downloaded secondary payload from 185.220.101.47 (Tor exit node, flagged in threat intel).",
+    "2025-07-14T11:34:15Z — vssadmin.exe Delete Shadows /All /Quiet executed — all Volume Shadow Copies deleted.",
+    "2025-07-14T11:34:18Z — bcdedit.exe /set {default} recoveryenabled No — Windows Recovery disabled.",
+    "2025-07-14T11:34:22Z — wbadmin DELETE SYSTEMSTATEBACKUP — system state backup deleted.",
+    "2025-07-14T11:34:31Z — Rapid file rename activity: 3,847 files renamed with .enc extension in C:\\Shares\\Finance within 9 seconds.",
+    "2025-07-14T11:34:33Z — Ransom note README_DECRYPT.txt written to 14 directories.",
+    "2025-07-14T11:34:40Z — Outbound HTTPS to 185.220.101.47:443 — likely C2 check-in or key exfiltration."
+  ],
+  "context": {
+    "user_account": "jdoe",
+    "account_type": "standard domain user",
+    "normal_working_hours": "09:00–17:00 UTC",
+    "prior_alerts_on_source": 1,
+    "prior_alert_detail": "Phishing email opened 2025-07-13T08:52Z — link not clicked per proxy logs (unconfirmed).",
+    "asset_criticality_destination": "CRITICAL — primary file server for finance department"
+  }
+}

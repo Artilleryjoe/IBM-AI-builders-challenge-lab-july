@@ -1,0 +1,28 @@
+{
+  "id": "scenario_003",
+  "title": "Credential Stuffing — VPN Gateway Authentication Anomaly",
+  "severity": "MEDIUM",
+  "alert_type": "Credential Stuffing / Authentication Anomaly",
+  "mitre_tactic": "TA0006 - Credential Access",
+  "mitre_technique": "T1110.004 — Brute Force: Credential Stuffing",
+  "source_ip": "198.51.100.73",
+  "destination_ip": "203.0.113.10",
+  "timestamp": "2025-07-14T07:08:55Z",
+  "affected_host": "VPN-GW-EXTERNAL",
+  "raw_evidence": [
+    "2025-07-14T07:08:55Z — 1,240 failed authentication attempts against VPN gateway from 198.51.100.73 over 4 minutes.",
+    "2025-07-14T07:09:03Z — Attempts use valid username format (first.last@corp.example) — not random; suggests credential list from prior breach.",
+    "2025-07-14T07:11:44Z — 3 successful authentications during the spray window: accounts mwilliams, t.chen, r.patel.",
+    "2025-07-14T07:11:50Z — mwilliams session: immediate download of IT asset inventory spreadsheet (unusual — no prior VPN file access for this account).",
+    "2025-07-14T07:12:01Z — t.chen session: MFA challenge issued and passed within 4 seconds (unusually fast; possible MFA fatigue / push bombing).",
+    "2025-07-14T07:12:19Z — r.patel session: connection dropped after 8 seconds — no file access.",
+    "2025-07-14T07:13:00Z — Source IP 198.51.100.73 geolocated to residential proxy service — not a known corporate location."
+  ],
+  "context": {
+    "user_account": "mwilliams / t.chen / r.patel",
+    "account_type": "standard domain users",
+    "normal_working_hours": "08:00–18:00 UTC",
+    "prior_alerts_on_source": 0,
+    "asset_criticality_destination": "HIGH — external VPN gateway, entry point to internal network"
+  }
+}

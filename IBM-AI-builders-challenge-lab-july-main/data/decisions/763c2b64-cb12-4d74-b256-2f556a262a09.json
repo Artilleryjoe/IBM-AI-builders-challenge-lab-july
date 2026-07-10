@@ -1,0 +1,19 @@
+{
+  "ai_confidence": 0.71,
+  "ai_reasoning": "Three accounts authenticated successfully during a large credential stuffing spray, with one account immediately accessing sensitive files and another passing MFA suspiciously fast. This warrants urgent investigation \u2014 the accounts may be compromised, but the evidence is not yet conclusive enough to assume full breach without further analysis.",
+  "ai_recommendation": "investigate",
+  "ai_suggested_actions": [
+    "Force immediate password reset and MFA re-enrolment for mwilliams, t.chen, and r.patel",
+    "Review session activity for all three accounts over the last 24 hours",
+    "Block source IP 198.51.100.73 at the perimeter firewall pending investigation"
+  ],
+  "analyst_action": "override",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "AI says investigate but I have additional context.",
+  "override_description": "Treating as confirmed breach \u2014 blocking IP and resetting accounts now.",
+  "record_hash": "fd1203306a8da025ff0a6751469e1890b1a0897ee2e6bc6dc48a8fa69f778493",
+  "record_id": "763c2b64-cb12-4d74-b256-2f556a262a09",
+  "scenario_id": "scenario_003",
+  "scenario_title": "Credential Stuffing \u2014 VPN Gateway Authentication Anomaly",
+  "timestamp": "2026-07-10T04:48:04.410380+00:00"
+}
