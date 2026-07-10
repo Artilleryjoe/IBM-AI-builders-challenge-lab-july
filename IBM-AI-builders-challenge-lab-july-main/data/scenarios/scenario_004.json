@@ -1,0 +1,29 @@
+{
+  "id": "scenario_004",
+  "title": "Data Exfiltration - Large Outbound Transfer to Cloud Storage",
+  "severity": "HIGH",
+  "alert_type": "Data Exfiltration",
+  "mitre_tactic": "TA0010 - Exfiltration",
+  "mitre_technique": "T1567.002 - Exfiltration to Cloud Storage",
+  "source_ip": "10.2.11.45",
+  "destination_ip": "52.216.0.0/14",
+  "timestamp": "2025-07-14T21:44:10Z",
+  "affected_host": "WS-HR-045",
+  "raw_evidence": [
+    "2025-07-14T21:44:10Z — DLP alert: 4.7 GB outbound transfer from WS-HR-045 to amazonaws.com (bucket: hr-data-backup-ext) over 18 minutes.",
+    "2025-07-14T21:44:11Z — Transfer tool: rclone.exe (portable, unsigned) — not in approved software inventory.",
+    "2025-07-14T21:44:14Z — rclone.exe process spawned by cmd.exe, parent process: explorer.exe (user-initiated).",
+    "2025-07-14T21:44:20Z — Files transferred: 2,341 documents from C:\\HR\\Compensation\\2025 and C:\\HR\\Investigations\\Active.",
+    "2025-07-14T21:47:03Z — Destination S3 bucket hr-data-backup-ext is not registered in the corporate cloud asset inventory.",
+    "2025-07-14T21:50:22Z — User account: m.jensen — HR Business Partner. Submitted resignation 6 days ago, last day in 4 days.",
+    "2025-07-14T21:52:01Z — No prior DLP alerts for m.jensen in the last 12 months."
+  ],
+  "context": {
+    "user_account": "m.jensen",
+    "account_type": "standard domain user — HR department",
+    "normal_working_hours": "08:00-17:00 UTC",
+    "prior_alerts_on_source": 0,
+    "resignation_notice_on_file": "yes — final day 2025-07-18",
+    "asset_criticality_destination": "HIGH — active HR investigations and compensation data"
+  }
+}

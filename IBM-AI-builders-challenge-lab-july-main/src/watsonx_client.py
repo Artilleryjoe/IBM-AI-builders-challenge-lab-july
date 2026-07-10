@@ -272,6 +272,125 @@ _MOCK_RESPONSES: dict[str, dict] = {
         ],
         "source": "mock",
     },
+    "Data Exfiltration": {
+        "recommendation": "escalate",
+        "confidence_score": 0.88,
+        "reasoning": (
+            "An employee serving notice transferred 4.7 GB of sensitive HR compensation "
+            "and investigations data to an unregistered external S3 bucket using an "
+            "unsigned portable tool not in the approved software inventory. The combination "
+            "of departure context, data sensitivity, and unapproved tooling makes this a "
+            "high-confidence insider data theft case."
+        ),
+        "suggested_actions": [
+            "Suspend m.jensen's network access immediately pending investigation",
+            "Issue a legal hold on m.jensen's workstation and request preservation of the S3 bucket",
+            "Notify HR, Legal, and the DLP team — this may be a regulatory breach",
+        ],
+        "source": "mock",
+    },
+    "Business Email Compromise": {
+        "recommendation": "escalate",
+        "confidence_score": 0.94,
+        "reasoning": (
+            "All technical indicators confirm a BEC attempt: SPF/DKIM/DMARC failures, "
+            "a typosquatted domain matching the CFO's name, and a high-value wire transfer "
+            "request timed to coincide with the CFO's travel window. The AP contact has "
+            "already replied, increasing the risk of transfer execution. Immediate "
+            "intervention is required before the 2-hour deadline."
+        ),
+        "suggested_actions": [
+            "Contact a.santos directly (phone, not email) and instruct them NOT to process the transfer",
+            "Block the sender domain corp-example.co at the mail gateway",
+            "Notify the CFO via out-of-band channel and file an IC3 complaint",
+        ],
+        "source": "mock",
+    },
+    "Privilege Escalation": {
+        "recommendation": "escalate",
+        "confidence_score": 0.89,
+        "reasoning": (
+            "A junior developer downloaded and executed an unsigned token manipulation tool "
+            "that successfully impersonated a service account with admin rights across 14 "
+            "servers. Domain enumeration was completed and a lateral movement attempt to "
+            "production was blocked only by the host firewall — not by detection. The "
+            "attacker has demonstrated capability and intent."
+        ),
+        "suggested_actions": [
+            "Isolate SRV-DEV-112 and terminate all sessions for r.okonkwo immediately",
+            "Revoke svc_deploy token on all 14 servers and rotate the service account credentials",
+            "Audit all 14 servers for signs of successful WMI or remote execution in the last hour",
+        ],
+        "source": "mock",
+    },
+    "Supply Chain Attack": {
+        "recommendation": "escalate",
+        "confidence_score": 0.97,
+        "reasoning": (
+            "A malicious typosquatted package was installed across 4 CI runners, establishing "
+            "reverse shells and exfiltrating AWS and GitHub credentials. The blast radius is "
+            "wide — any pipeline that ran in the last 47 minutes may be affected. CI/CD "
+            "compromise gives the attacker potential production deployment capability. "
+            "This is a critical-severity incident requiring immediate IR activation."
+        ),
+        "suggested_actions": [
+            "Immediately rotate all exposed secrets: AWS keys and GitHub tokens from all 4 runners",
+            "Isolate all 4 affected CI runners and remove requests-plus from the internal mirror",
+            "Audit all deployments triggered in the last 47 minutes for signs of tampering",
+        ],
+        "source": "mock",
+    },
+    "Insider Threat": {
+        "recommendation": "investigate",
+        "confidence_score": 0.66,
+        "reasoning": (
+            "A privileged user accessed a large volume of sensitive HR records far outside "
+            "their normal baseline and role scope, using inherited privileges that should "
+            "have been revoked. No exfiltration was detected, but the access pattern and "
+            "the user's PIP status create a concerning picture. Confidence is moderate — "
+            "there may be a legitimate operational reason not captured in available data."
+        ),
+        "suggested_actions": [
+            "Revoke p.walsh's inherited DBA privileges immediately via access review",
+            "Preserve a full audit log of the session for HR and Legal review",
+            "Interview p.walsh's manager before any direct confrontation to establish context",
+        ],
+        "source": "mock",
+    },
+    "Command and Control - DNS Tunnelling": {
+        "recommendation": "escalate",
+        "confidence_score": 0.91,
+        "reasoning": (
+            "The DNS query volume (312x baseline), base32-encoded subdomain pattern, "
+            "large TXT response payloads, and a recently registered C2 domain are definitive "
+            "indicators of DNS tunnelling. The affected host contains active M&A due "
+            "diligence materials — the potential data loss impact is severe. The covert "
+            "channel has been active for at least 6 hours."
+        ),
+        "suggested_actions": [
+            "Isolate WS-LEGAL-199 from the network immediately to sever the C2 channel",
+            "Block all DNS queries to tunnel-c2.xyz at the recursive resolver",
+            "Engage IR and Legal — M&A data exposure may trigger regulatory and contractual obligations",
+        ],
+        "source": "mock",
+    },
+    "Zero-Day Exploit Attempt": {
+        "recommendation": "escalate",
+        "confidence_score": 0.95,
+        "reasoning": (
+            "The evidence confirms successful exploitation: the web application process wrote "
+            "and executed an ELF binary, a reverse shell was established, and attacker "
+            "commands were observed before egress was blocked. A patch for the exploited "
+            "vulnerability was available but not applied. The host is a customer-facing "
+            "production system — this is an active breach requiring immediate containment."
+        ),
+        "suggested_actions": [
+            "Take WEB-APP-PROD-01 offline immediately and redirect traffic to a clean standby instance",
+            "Apply CVE-2025-XXXX patch to all instances before bringing any back online",
+            "Preserve the core dump and /tmp/.x binary for forensic analysis and threat intel sharing",
+        ],
+        "source": "mock",
+    },
 }
 
 _DEFAULT_MOCK = {

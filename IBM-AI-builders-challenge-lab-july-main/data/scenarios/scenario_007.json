@@ -1,0 +1,29 @@
+{
+  "id": "scenario_007",
+  "title": "Supply Chain Attack - Malicious Package in Internal PyPI Mirror",
+  "severity": "CRITICAL",
+  "alert_type": "Supply Chain Attack",
+  "mitre_tactic": "TA0001 - Initial Access",
+  "mitre_technique": "T1195.001 - Supply Chain Compromise: Compromise Software Dependencies",
+  "source_ip": "10.4.0.0/16",
+  "destination_ip": "203.0.113.88",
+  "timestamp": "2025-07-14T16:29:05Z",
+  "affected_host": "CI-RUNNER-07",
+  "raw_evidence": [
+    "2025-07-14T16:29:05Z — CI pipeline on CI-RUNNER-07 installed requests-plus==2.31.1 from internal PyPI mirror — package not present in approved dependency manifest.",
+    "2025-07-14T16:29:07Z — Post-install hook in requests-plus setup.py executed: base64-decoded shell command spawning outbound connection to 203.0.113.88:4444.",
+    "2025-07-14T16:29:09Z — Reverse shell established: CI-RUNNER-07 -> 203.0.113.88:4444 (TCP, persistent).",
+    "2025-07-14T16:29:14Z — Environment variable dump transmitted: included AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN from CI environment.",
+    "2025-07-14T16:29:18Z — requests-plus package uploaded to internal mirror 47 minutes ago by service account ci_mirror_sync — account not used for 23 days prior.",
+    "2025-07-14T16:29:22Z — Legitimate package requests 2.31.0 exists; requests-plus is a typosquat with one character difference.",
+    "2025-07-14T16:30:01Z — 3 other CI runners installed the same package in the last 47 minutes: CI-RUNNER-02, CI-RUNNER-05, CI-RUNNER-09."
+  ],
+  "context": {
+    "user_account": "ci_mirror_sync (service account)",
+    "account_type": "automated service account — PyPI mirror synchronisation",
+    "prior_alerts_on_source": 0,
+    "affected_pipelines": "all pipelines using requests or requests-plus dependency",
+    "secrets_exposed": "AWS credentials, GitHub token from 4 CI runners",
+    "asset_criticality_destination": "CRITICAL — CI/CD pipeline compromise; production deployment capability at risk"
+  }
+}

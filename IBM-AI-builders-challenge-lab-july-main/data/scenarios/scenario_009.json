@@ -1,0 +1,30 @@
+{
+  "id": "scenario_009",
+  "title": "DNS Tunnelling - Covert C2 Channel via DNS TXT Queries",
+  "severity": "HIGH",
+  "alert_type": "Command and Control - DNS Tunnelling",
+  "mitre_tactic": "TA0011 - Command and Control",
+  "mitre_technique": "T1071.004 - Application Layer Protocol: DNS",
+  "source_ip": "10.5.3.199",
+  "destination_ip": "8.8.8.8",
+  "timestamp": "2025-07-14T18:07:44Z",
+  "affected_host": "WS-LEGAL-199",
+  "raw_evidence": [
+    "2025-07-14T18:07:44Z — DNS analytics alert: WS-LEGAL-199 generated 9,847 DNS TXT queries in 6 hours — 312x above the host baseline of 31 queries/day.",
+    "2025-07-14T18:07:45Z — Query pattern: subdomains follow base32-encoded format (e.g. MFRA2YLNMFXGI.tunnel-c2.xyz) — consistent with DNS tunnelling.",
+    "2025-07-14T18:07:47Z — Destination domain tunnel-c2.xyz registered 11 days ago — no legitimate business relationship.",
+    "2025-07-14T18:07:50Z — TXT response payloads average 180 bytes — significantly above normal TXT record size; consistent with data encoding.",
+    "2025-07-14T18:07:55Z — No direct internet access from this host — all DNS routed via internal resolver then to 8.8.8.8. HTTP/HTTPS proxy logs show no anomaly (tunnelling bypasses proxy).",
+    "2025-07-14T18:08:03Z — Process generating queries: svchost.exe (PID 4812) — unusual; legitimate svchost rarely generates bulk DNS TXT queries.",
+    "2025-07-14T18:09:12Z — WS-LEGAL-199 hosts active M&A due diligence materials for a pending acquisition (highly sensitive)."
+  ],
+  "context": {
+    "user_account": "k.oduya",
+    "account_type": "legal counsel — M&A team",
+    "normal_working_hours": "08:00-19:00 UTC",
+    "prior_alerts_on_source": 0,
+    "host_sensitivity": "CRITICAL — active M&A due diligence documents present on host",
+    "dns_resolver": "internal — external queries proxied via 8.8.8.8",
+    "asset_criticality_destination": "CRITICAL — potential exfiltration of M&A data via covert channel"
+  }
+}

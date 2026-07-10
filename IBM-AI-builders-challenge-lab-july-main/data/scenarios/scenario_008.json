@@ -1,0 +1,30 @@
+{
+  "id": "scenario_008",
+  "title": "Insider Threat - Privileged Admin Accessing Sensitive Data Outside Role",
+  "severity": "MEDIUM",
+  "alert_type": "Insider Threat",
+  "mitre_tactic": "TA0009 - Collection",
+  "mitre_technique": "T1530 - Data from Cloud Storage",
+  "source_ip": "10.1.8.77",
+  "destination_ip": "10.1.8.77",
+  "timestamp": "2025-07-14T23:11:02Z",
+  "affected_host": "WS-ITSEC-077",
+  "raw_evidence": [
+    "2025-07-14T23:11:02Z — UEBA alert: p.walsh (IT Security Engineer) accessed 847 records in the HR database between 22:58 and 23:11 — 14x above their 30-day access baseline.",
+    "2025-07-14T23:11:03Z — Records accessed: employee salary bands, performance review scores, and disciplinary records for 847 employees.",
+    "2025-07-14T23:11:05Z — Access method: direct SQL queries via DBA tool — p.walsh holds inherited DBA privileges from a prior role that were never revoked.",
+    "2025-07-14T23:11:08Z — No business justification ticket open for HR data access by IT Security.",
+    "2025-07-14T23:11:10Z — Session originated from corporate VPN — p.walsh is working from home.",
+    "2025-07-14T23:14:33Z — Data was not exfiltrated to external destinations — no outbound transfer detected.",
+    "2025-07-14T23:15:01Z — p.walsh is currently under a performance improvement plan (HR record, not visible to IT)."
+  ],
+  "context": {
+    "user_account": "p.walsh",
+    "account_type": "IT Security Engineer — DBA privileges inherited, not current role",
+    "normal_working_hours": "08:00-18:00 UTC",
+    "prior_alerts_on_source": 0,
+    "data_exfiltrated": "none detected",
+    "pip_status": "subject of active PIP — may have motivation to access own or peer records",
+    "asset_criticality_destination": "HIGH — HR employee records including compensation and disciplinary data"
+  }
+}

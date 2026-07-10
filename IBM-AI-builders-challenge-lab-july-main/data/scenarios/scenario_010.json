@@ -1,0 +1,29 @@
+{
+  "id": "scenario_010",
+  "title": "Zero-Day Exploit Attempt - Memory Corruption in Public-Facing Web Application",
+  "severity": "CRITICAL",
+  "alert_type": "Zero-Day Exploit Attempt",
+  "mitre_tactic": "TA0002 - Execution",
+  "mitre_technique": "T1203 - Exploitation for Client Execution",
+  "source_ip": "91.108.56.144",
+  "destination_ip": "203.0.113.50",
+  "timestamp": "2025-07-14T04:51:17Z",
+  "affected_host": "WEB-APP-PROD-01",
+  "raw_evidence": [
+    "2025-07-14T04:51:17Z — WAF alert: 14 requests from 91.108.56.144 targeting /api/v2/upload endpoint with malformed multipart MIME boundary strings — payload length exceeds parser buffer by 4096 bytes.",
+    "2025-07-14T04:51:19Z — Web application process (node_app, PID 1882) crashed and was auto-restarted by systemd — core dump captured.",
+    "2025-07-14T04:51:22Z — Second crash 3 seconds later — attacker adjusting payload. Third request did not crash the process.",
+    "2025-07-14T04:51:28Z — Post-exploitation indicator: /tmp/.x (hidden executable, 47KB, ELF binary) written to disk by node_app process — node_app should never write executables.",
+    "2025-07-14T04:51:31Z — /tmp/.x executed by node_app — spawned outbound connection to 91.108.56.144:9001 (reverse shell).",
+    "2025-07-14T04:51:35Z — CVE cross-reference: payload structure matches PoC for CVE-2025-XXXX (unpatched — vendor patch released 18 hours ago, not yet applied).",
+    "2025-07-14T04:52:00Z — Reverse shell active for 43 seconds before network egress block triggered. Commands observed: id, uname -a, cat /etc/passwd."
+  ],
+  "context": {
+    "user_account": "N/A — unauthenticated external attacker",
+    "account_type": "external",
+    "prior_alerts_on_source": 2,
+    "prior_alert_detail": "Port scan from 91.108.56.144 detected 2025-07-13T22:14Z — no action taken.",
+    "patch_status": "CVE-2025-XXXX patch available 18h ago — not yet applied per change management schedule",
+    "asset_criticality_destination": "CRITICAL — public-facing production web application; customer data in scope"
+  }
+}

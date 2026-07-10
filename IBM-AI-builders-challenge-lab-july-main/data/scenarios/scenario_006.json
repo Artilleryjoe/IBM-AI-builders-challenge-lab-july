@@ -1,0 +1,29 @@
+{
+  "id": "scenario_006",
+  "title": "Privilege Escalation - Local Admin Token Abuse via Token Impersonation",
+  "severity": "HIGH",
+  "alert_type": "Privilege Escalation",
+  "mitre_tactic": "TA0004 - Privilege Escalation",
+  "mitre_technique": "T1134.001 - Access Token Manipulation: Token Impersonation/Theft",
+  "source_ip": "10.3.5.112",
+  "destination_ip": "10.3.5.112",
+  "timestamp": "2025-07-14T14:03:58Z",
+  "affected_host": "SRV-DEV-112",
+  "raw_evidence": [
+    "2025-07-14T14:03:58Z — EDR alert: process ImpersonateLoggedOnUser called by devtools_helper.exe (unsigned, dropped to C:\\Windows\\Temp 4 minutes prior).",
+    "2025-07-14T14:04:01Z — devtools_helper.exe duplicated access token of svc_deploy (a domain service account with local admin on 14 servers).",
+    "2025-07-14T14:04:03Z — New process spawned under svc_deploy token: cmd.exe — executed net localgroup administrators /domain.",
+    "2025-07-14T14:04:11Z — net user /domain executed — full domain user enumeration.",
+    "2025-07-14T14:04:19Z — Attempted WMI remote execution to SRV-PROD-001 using svc_deploy token — blocked by host firewall.",
+    "2025-07-14T14:04:44Z — devtools_helper.exe origin: downloaded via curl from 194.147.78.33 by user r.okonkwo 6 minutes before alert.",
+    "2025-07-14T14:05:02Z — r.okonkwo is a junior developer with no legitimate reason to access svc_deploy or run token manipulation tools."
+  ],
+  "context": {
+    "user_account": "r.okonkwo",
+    "account_type": "junior developer — no admin privileges",
+    "normal_working_hours": "09:00-18:00 UTC",
+    "prior_alerts_on_source": 0,
+    "svc_deploy_scope": "local admin on 14 production and staging servers",
+    "asset_criticality_destination": "HIGH — developer server with lateral path to production"
+  }
+}
