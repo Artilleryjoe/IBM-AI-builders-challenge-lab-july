@@ -3,6 +3,16 @@ decision_record.py
 
 Defines the DecisionRecord dataclass — the canonical output of the Decision Assurance Layer.
 Every analyst decision produces one record. Records are hashed for tamper-evidence.
+
+Integrity verification
+----------------------
+verify_record_dict(record_dict) -> bool
+    Accepts a record loaded from JSON (e.g. from disk or COS), recomputes the
+    SHA-256 hash using the same canonical method as compute_hash(), and returns
+    True if the recomputed hash matches the stored record_hash field.
+
+    This is the live tamper-detection mechanism: any field mutated after the
+    record was originally saved will produce a different hash, returning False.
 """
 
 from __future__ import annotations
@@ -89,6 +99,68 @@ class DecisionRecord:
     # ------------------------------------------------------------------
     # Convenience factory
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def verify_record_dict(record_dict: dict) -> bool:
+        """
+        Verify the integrity of a record loaded from persistent storage.
+
+        Recomputes the SHA-256 hash over all fields in `record_dict` except
+        `record_hash`, using the same canonical serialisation as `compute_hash()`
+        (JSON with sorted keys, ASCII-safe encoding), and compares the result to
+        the stored `record_hash` value.
+
+        Parameters
+        ----------
+        record_dict : dict
+            A decision record as loaded from JSON — either from `data/decisions/`
+            or from IBM Cloud Object Storage.
+
+        Returns
+        -------
+        bool
+            True  — the record has not been modified since it was saved.
+            False — at least one field differs from what was hashed at save time,
+                    or the stored hash is missing / malformed.
+        """
+        stored_hash = record_dict.get("record_hash", "")
+        if not stored_hash or len(stored_hash) != 64:
+            return False
+
+        # Build a copy without the hash field — mirrors _to_dict_without_hash()
+        payload = {k: v for k, v in record_dict.items() if k != "record_hash"}
+        try:
+            serialized = json.dumps(payload, sort_keys=True, ensure_ascii=True)
+            computed = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        except (TypeError, ValueError):
+            return False
+
+        return computed == stored_hash
+
+    @staticmethod
+    def compute_hash_for_dict(record_dict: dict) -> str:
+        """
+        Compute and return the SHA-256 hash for a record dict without modifying it.
+
+        Used by the audit log to surface both the stored hash and the recomputed
+        hash side-by-side for display in the UI.
+
+        Parameters
+        ----------
+        record_dict : dict
+            A decision record as loaded from JSON.
+
+        Returns
+        -------
+        str
+            64-character hex SHA-256 digest, or an empty string on error.
+        """
+        payload = {k: v for k, v in record_dict.items() if k != "record_hash"}
+        try:
+            serialized = json.dumps(payload, sort_keys=True, ensure_ascii=True)
+            return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        except (TypeError, ValueError):
+            return ""
 
     @classmethod
     def create(

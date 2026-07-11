@@ -11,6 +11,10 @@ get_recommendation(scenario_id: str) -> dict
     Load a scenario fixture and return it combined with an AI recommendation.
     Result is suitable for direct use in Streamlit session_state.
 
+get_ranked_actions(scenario_id: str) -> dict
+    Load a scenario fixture and return a ranked list of all three possible
+    response actions, each with an independent confidence score.
+
 submit_decision(
     scenario_id, ai_result, analyst_action, analyst_rationale,
     override_description=None, analyst_id="analyst_01"
@@ -19,6 +23,10 @@ submit_decision(
 
 get_audit_log() -> list[dict]
     Return all saved decision records for the audit log view.
+    Each record is annotated with integrity verification fields:
+        integrity_valid : bool   — True if stored hash matches recomputed hash
+        computed_hash   : str    — the freshly recomputed SHA-256 digest
+        stored_hash     : str    — the hash that was written at save time
 """
 
 from __future__ import annotations
@@ -155,17 +163,92 @@ def get_audit_log() -> list[dict]:
     """
     Return all saved decision records for display in the audit log.
 
+    Each returned dict is the full stored record augmented with three
+    integrity-verification fields so the UI can display tamper status
+    without performing its own crypto:
+
+        integrity_valid : bool   True if the record has not been modified
+                                 since it was originally saved.
+        computed_hash   : str    SHA-256 digest recomputed now from the
+                                 stored fields (excluding record_hash).
+        stored_hash     : str    The hash value written at save time.
+
     Returns
     -------
     list[dict]
-        List of full DecisionRecord dicts, newest first.
-        Returns an empty list if no records exist.
+        List of annotated DecisionRecord dicts, newest first.
+        Returns an empty list if no records exist or if retrieval fails.
     """
     try:
-        return cos_client.list_decision_records()
+        raw_records = cos_client.list_decision_records()
     except Exception as exc:
         logger.warning("[dal_engine] Could not retrieve audit log: %s", exc)
         return []
+
+    annotated = []
+    for record in raw_records:
+        stored_hash = record.get("record_hash", "")
+        computed_hash = DecisionRecord.compute_hash_for_dict(record)
+        integrity_valid = (
+            bool(computed_hash)
+            and bool(stored_hash)
+            and computed_hash == stored_hash
+        )
+        annotated_record = dict(record)
+        annotated_record["integrity_valid"] = integrity_valid
+        annotated_record["computed_hash"] = computed_hash
+        annotated_record["stored_hash"] = stored_hash
+        if not integrity_valid:
+            logger.warning(
+                "[dal_engine] Integrity check FAILED for record %s — "
+                "stored=%s... computed=%s...",
+                record.get("record_id", "?")[:8],
+                stored_hash[:12] if stored_hash else "MISSING",
+                computed_hash[:12] if computed_hash else "ERROR",
+            )
+        annotated.append(annotated_record)
+
+    return annotated
+
+
+def get_ranked_actions(scenario_id: str) -> dict:
+    """
+    Load the scenario fixture and return a ranked list of all three response
+    actions, each scored independently by the AI.
+
+    Parameters
+    ----------
+    scenario_id : str
+        The scenario ID (e.g. "scenario_001").
+
+    Returns
+    -------
+    dict with keys:
+        scenario       dict        The full scenario fixture
+        ranked_actions list[dict]  Sorted highest-confidence-first. Each item:
+            action           str    "investigate" | "escalate" | "dismiss"
+            confidence_score float  0.0 – 1.0
+            reasoning        str    why this action scores as it does
+            suggested_steps  list   2–3 specific steps for this action
+        source         str         "watsonx" | "mock"
+        error          str | None  Set if the scenario was not found
+    """
+    scenario = scenario_loader.get_scenario(scenario_id)
+    if scenario is None:
+        logger.error("[dal_engine] Scenario not found for ranked actions: %s", scenario_id)
+        return {"error": f"Scenario '{scenario_id}' not found."}
+
+    ranked = watsonx_client.generate_ranked_actions(scenario)
+    source = ranked[0].get("source", "mock") if ranked else "mock"
+    # source is not stored per-item in ranked response — infer from demo mode
+    source = "mock" if watsonx_client.is_demo_mode() else "watsonx"
+
+    return {
+        "scenario": scenario,
+        "ranked_actions": ranked,
+        "source": source,
+        "error": None,
+    }
 
 
 def is_demo_mode() -> bool:

@@ -1,0 +1,19 @@
+{
+  "ai_confidence": 0.87,
+  "ai_reasoning": "The evidence shows a service account performing an SMB subnet sweep outside business hours, followed by successful authentication to multiple hosts and a credential dump attempt on a high-value finance workstation. This pattern is highly consistent with active lateral movement by a compromised account.",
+  "ai_recommendation": "escalate",
+  "ai_suggested_actions": [
+    "Isolate source host 10.0.4.88 from the network immediately",
+    "Revoke and reset the svc_backup service account credentials",
+    "Deploy EDR hunt across 10.0.4.0/24 for PSEXESVC.exe and lsass access artefacts"
+  ],
+  "analyst_action": "approve",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "Test integrity verification.",
+  "override_description": null,
+  "record_hash": "de83d2ba393d909ebaa54ced65d2e474c04b37aec0cad24d41bea79f9b2f792b",
+  "record_id": "05aad608-dcf4-4ed9-9799-bbacbc74231d",
+  "scenario_id": "scenario_001",
+  "scenario_title": "Lateral Movement via SMB \u2014 Internal Subnet Sweep",
+  "timestamp": "2026-07-11T02:09:47.689247+00:00"
+}

@@ -100,9 +100,9 @@ Every `DecisionRecord` produced by this system is an instantiation of the framew
 
 ### 5. Audit Record
 
-**What it is:** The immutable, tamper-evident record that captures all four preceding elements as a single, versioned, hashed document persisted to IBM Cloud Object Storage.
+**What it is:** The tamper-evident record that captures all four preceding elements as a single, versioned, hashed document persisted to IBM Cloud Object Storage (or `data/decisions/` in local fallback mode).
 
-**Why it matters:** The audit record is the DAL's primary deliverable. It is what makes AI-assisted decision-making reviewable, attributable, and defensible. The SHA-256 hash ensures that the record content cannot be silently modified after saving — any change to any field invalidates the hash.
+**Why it matters:** The audit record is the DAL's primary deliverable. It is what makes AI-assisted decision-making reviewable, attributable, and defensible. The SHA-256 hash ensures that any post-save modification to any field is detectable — the Audit Log recomputes the hash on every review and surfaces a mismatch immediately.
 
 **Data fields (from `DecisionRecord`):**
 
@@ -117,6 +117,65 @@ Every `DecisionRecord` produced by this system is an instantiation of the framew
 **Storage:** Each record is persisted to IBM Cloud Object Storage under the key `decisions/{record_id}.json`. A local file fallback (`data/decisions/`) is provided for offline / demo use.
 
 **MVP implementation:** Produced by `DecisionRecord.create()` in `src/decision_record.py`, saved by `src/cos_client.py`.
+
+---
+
+## Audit Integrity Verification
+
+### Tamper-Evident vs Immutable
+
+A `DecisionRecord` is **tamper-evident**, not immutable. The distinction matters:
+
+- **Immutable** would mean the record physically cannot be changed — requiring append-only storage, WORM policies, or cryptographic ledgers.
+- **Tamper-evident** means any change *can* be made to the stored file, but the change *cannot be hidden* — the SHA-256 hash will no longer match, and the system will detect and report the discrepancy.
+
+The DAL uses the tamper-evident approach because it is simpler to implement and sufficient for the accountability use case: the goal is not to prevent tampering, but to make tampering visible during audit review.
+
+### How Verification Works
+
+Every time the Audit Log is loaded, `dal_engine.get_audit_log()` calls `DecisionRecord.compute_hash_for_dict()` for each stored record. This function:
+
+1. Takes the stored record dict (loaded from disk or IBM COS)
+2. Removes the `record_hash` field
+3. Serialises the remaining fields to JSON with keys sorted alphabetically
+4. Computes a fresh SHA-256 digest
+5. Compares the result to the `record_hash` field that was written at save time
+
+If the two hashes match, the record is marked `integrity_valid = True`. If they differ, `integrity_valid = False`.
+
+### What the Audit Log Shows
+
+Each row in the Audit Log summary table includes an **Integrity** column:
+
+| Status | Meaning |
+|---|---|
+| `✅ Verified` | The record content is identical to what was saved. No fields have been modified. |
+| `❌ Hash mismatch` | At least one field differs from the original. The stored hash and recomputed hash are shown side-by-side in the Full Record Inspector. |
+
+The Full Record Inspector displays:
+- The **stored hash** — the SHA-256 digest written at save time
+- The **recomputed hash** — the SHA-256 digest computed now from the current field values
+- A clear pass/fail status with an explanation
+
+### Manual Tamper Test
+
+To verify the system detects tampering:
+
+1. Run the app and submit any decision — note the `record_id` from the confirmation screen
+2. Open `data/decisions/{record_id}.json` in a text editor
+3. Change the value of `analyst_rationale` to any different string
+4. Save the file
+5. Return to the app and click **Refresh** in the Audit Log tab
+6. The record will show `❌ Hash mismatch` in the Integrity column
+7. Open the Full Record Inspector — both hashes are displayed side-by-side, confirming exactly what changed
+
+### Verification Scope
+
+Integrity verification works identically for:
+- **Local fallback records** stored in `data/decisions/`
+- **IBM Cloud Object Storage records** fetched from the COS bucket
+
+The verification logic in `DecisionRecord.verify_record_dict()` and `compute_hash_for_dict()` operates purely on the record dict, with no dependency on the storage backend.
 
 ---
 

@@ -1,0 +1,19 @@
+{
+  "ai_confidence": 0.97,
+  "ai_reasoning": "A malicious typosquatted package was installed across 4 CI runners, establishing reverse shells and exfiltrating AWS and GitHub credentials. The blast radius is wide \u2014 any pipeline that ran in the last 47 minutes may be affected. CI/CD compromise gives the attacker potential production deployment capability. This is a critical-severity incident requiring immediate IR activation.",
+  "ai_recommendation": "escalate",
+  "ai_suggested_actions": [
+    "Immediately rotate all exposed secrets: AWS keys and GitHub tokens from all 4 runners",
+    "Isolate all 4 affected CI runners and remove requests-plus from the internal mirror",
+    "Audit all deployments triggered in the last 47 minutes for signs of tampering"
+  ],
+  "analyst_action": "approve",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "API test \u2014 escalation confirmed.",
+  "override_description": null,
+  "record_hash": "2ae13bbadf15f04bfb4066e4770d0db8500d560614feb2696029b428e3d4c477",
+  "record_id": "14b21e25-d22e-47db-bd03-a36f8eac445e",
+  "scenario_id": "scenario_007",
+  "scenario_title": "Supply Chain Attack - Malicious Package in Internal PyPI Mirror",
+  "timestamp": "2026-07-11T02:20:04.651014+00:00"
+}

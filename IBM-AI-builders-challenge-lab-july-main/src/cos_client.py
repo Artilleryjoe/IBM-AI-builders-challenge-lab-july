@@ -48,13 +48,32 @@ def _ensure_local_dir() -> None:
 
 
 def fallback_local_save(record: "DecisionRecord") -> str:
-    """Save a DecisionRecord JSON file to data/decisions/ on disk."""
+    """
+    Save a DecisionRecord JSON file to data/decisions/ on disk.
+
+    Raises
+    ------
+    OSError
+        If the file cannot be written — never fails silently.
+    """
     _ensure_local_dir()
     key = f"decisions/{record.record_id}.json"
     dest = _LOCAL_DECISIONS_DIR / f"{record.record_id}.json"
-    dest.write_text(record.to_json(), encoding="utf-8")
+    json_text = record.to_json()
+    try:
+        dest.write_text(json_text, encoding="utf-8")
+    except OSError as exc:
+        # Re-raise so the caller (and the UI) see the failure clearly
+        raise OSError(
+            f"[cos_client] Failed to write local decision record to {dest}: {exc}"
+        ) from exc
     logger.info("[cos_client] Record saved locally: %s", dest)
     return key
+
+
+def local_decisions_path() -> Path:
+    """Return the absolute path to the local decisions directory."""
+    return _LOCAL_DECISIONS_DIR
 
 
 def fallback_local_list() -> list[dict]:

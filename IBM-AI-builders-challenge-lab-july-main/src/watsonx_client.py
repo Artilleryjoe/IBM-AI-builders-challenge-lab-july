@@ -13,8 +13,16 @@ generate_recommendation(scenario: dict) -> dict
         reasoning         str   plain-language explanation
         suggested_actions list  2–3 concrete action strings
 
+generate_ranked_actions(scenario: dict) -> list[dict]
+    Returns a ranked list of all three possible actions, each with:
+        action            str   "investigate" | "escalate" | "dismiss"
+        confidence_score  float 0.0 – 1.0
+        reasoning         str   why this action scores as it does
+        suggested_steps   list  2–3 specific steps for this action
+    Sorted highest-confidence-first.
+
 If IBM credentials are absent or the API call fails, falls back automatically
-to fallback_mock_response(scenario) so the demo works without live credentials.
+to mock responses so the demo works without live credentials.
 """
 
 from __future__ import annotations
@@ -456,3 +464,193 @@ def is_demo_mode() -> bool:
     """Return True if the client is running without live IBM credentials."""
     _get_model()   # ensure initialisation has run
     return _demo_mode
+
+
+# ---------------------------------------------------------------------------
+# Ranked actions — system prompt and mock data
+# ---------------------------------------------------------------------------
+
+_RANKED_SYSTEM_PROMPT = """\
+You are a senior cybersecurity analyst assistant embedded in a Security Operations Centre.
+Your role is to evaluate ALL THREE possible response actions for a threat alert and score
+each one with an independent confidence value, so the human analyst can see the full
+decision landscape — not just the top recommendation.
+
+You MUST respond with valid JSON only — no markdown fences, no preamble, no trailing text.
+
+Return exactly this JSON structure:
+{
+  "ranked_actions": [
+    {
+      "action": "escalate",
+      "confidence_score": <float 0.0-1.0>,
+      "reasoning": "<1-2 sentences explaining why escalate scores as it does for this alert>",
+      "suggested_steps": ["<step 1>", "<step 2>", "<step 3>"]
+    },
+    {
+      "action": "investigate",
+      "confidence_score": <float 0.0-1.0>,
+      "reasoning": "<1-2 sentences explaining why investigate scores as it does>",
+      "suggested_steps": ["<step 1>", "<step 2>"]
+    },
+    {
+      "action": "dismiss",
+      "confidence_score": <float 0.0-1.0>,
+      "reasoning": "<1-2 sentences explaining why dismiss scores as it does>",
+      "suggested_steps": ["<step 1>"]
+    }
+  ]
+}
+
+Rules:
+- All three actions must be present — do not omit any.
+- confidence_scores must sum to approximately 1.0 across the three actions.
+- Sort ranked_actions by confidence_score descending.
+- suggested_steps must be specific to the actual evidence provided.
+- reasoning must reference specific evidence entries, not generic statements.
+"""
+
+# Per-scenario ranked mock responses
+_RANKED_MOCK: dict[str, list[dict]] = {
+    "Lateral Movement": [
+        {"action": "escalate",    "confidence_score": 0.87, "reasoning": "SMB sweep + credential dump + out-of-hours service account activity is a strong lateral movement signature requiring immediate IR.", "suggested_steps": ["Isolate 10.0.4.88 now", "Revoke svc_backup credentials", "EDR hunt for PSEXESVC.exe across /24"]},
+        {"action": "investigate", "confidence_score": 0.11, "reasoning": "A small chance this is a misconfigured backup job — worth verifying svc_backup's scheduled tasks before full escalation.", "suggested_steps": ["Check svc_backup scheduled task history", "Verify with system owner"]},
+        {"action": "dismiss",     "confidence_score": 0.02, "reasoning": "Credential dump on lsass.exe makes benign explanation extremely unlikely.", "suggested_steps": ["Do not dismiss without full investigation"]},
+    ],
+    "Ransomware Precursor": [
+        {"action": "escalate",    "confidence_score": 0.96, "reasoning": "File encryption is already in progress and shadow copies have been deleted — this is active ransomware, not a precursor.", "suggested_steps": ["Isolate SRV-FILE-201 immediately", "Activate ransomware IR playbook", "Preserve forensic image"]},
+        {"action": "investigate", "confidence_score": 0.03, "reasoning": "Near-zero probability that vssadmin deletion + mass .enc renames is a false positive.", "suggested_steps": ["Do not delay for investigation — act now"]},
+        {"action": "dismiss",     "confidence_score": 0.01, "reasoning": "Ransom note creation and C2 check-in make dismissal indefensible.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Credential Stuffing / Authentication Anomaly": [
+        {"action": "investigate", "confidence_score": 0.71, "reasoning": "Three successful authentications during a spray with anomalous post-login behaviour requires account-level investigation before assuming full breach.", "suggested_steps": ["Review session logs for mwilliams, t.chen, r.patel", "Check MFA push timing for t.chen", "Interview account holders"]},
+        {"action": "escalate",    "confidence_score": 0.23, "reasoning": "If mwilliams' file access or t.chen's MFA fatigue is confirmed, immediate escalation to IR is warranted.", "suggested_steps": ["Force password reset for all three accounts", "Block source IP 198.51.100.73", "Notify IR team on standby"]},
+        {"action": "dismiss",     "confidence_score": 0.06, "reasoning": "1,240 failed attempts followed by three successes is not consistent with routine user behaviour.", "suggested_steps": ["Do not dismiss without reviewing session data"]},
+    ],
+    "Data Exfiltration": [
+        {"action": "escalate",    "confidence_score": 0.88, "reasoning": "4.7 GB of HR investigation data transferred to an unregistered bucket by a departing employee using unapproved tooling is a near-certain insider theft case.", "suggested_steps": ["Suspend m.jensen access", "Legal hold on workstation and S3 bucket", "Notify HR, Legal, DLP team"]},
+        {"action": "investigate", "confidence_score": 0.10, "reasoning": "A small chance m.jensen was performing an authorised backup to a personal account — verify with HR before legal action.", "suggested_steps": ["Contact m.jensen's manager", "Check if any backup authorisation exists"]},
+        {"action": "dismiss",     "confidence_score": 0.02, "reasoning": "Unsigned rclone.exe targeting compensation and active investigations data at end of tenure has no benign explanation.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Business Email Compromise": [
+        {"action": "escalate",    "confidence_score": 0.94, "reasoning": "SPF/DKIM/DMARC failure + typosquatted CFO domain + $187k request during confirmed travel window is a textbook BEC. AP has already replied.", "suggested_steps": ["Call a.santos now — do not process transfer", "Block corp-example.co at gateway", "File IC3 report"]},
+        {"action": "investigate", "confidence_score": 0.05, "reasoning": "Extremely low probability this is a legitimate request given all technical indicators failing.", "suggested_steps": ["Verify directly with CFO via known phone number"]},
+        {"action": "dismiss",     "confidence_score": 0.01, "reasoning": "All authentication headers confirm this is not from the corporate mail server.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Privilege Escalation": [
+        {"action": "escalate",    "confidence_score": 0.89, "reasoning": "Token impersonation succeeded, domain enumeration completed, and lateral movement to production was attempted — attacker has demonstrated capability.", "suggested_steps": ["Isolate SRV-DEV-112", "Revoke svc_deploy on all 14 servers", "Audit production servers for WMI artefacts"]},
+        {"action": "investigate", "confidence_score": 0.09, "reasoning": "Possible the developer was running a misconfigured pentest tool — verify with the security team before assuming malicious intent.", "suggested_steps": ["Interview r.okonkwo immediately", "Check whether a pentest was scheduled"]},
+        {"action": "dismiss",     "confidence_score": 0.02, "reasoning": "ImpersonateLoggedOnUser + domain enumeration is not a legitimate developer workflow.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Supply Chain Attack": [
+        {"action": "escalate",    "confidence_score": 0.97, "reasoning": "Reverse shells established, AWS/GitHub secrets exfiltrated across 4 runners — this is an active supply chain breach with production deployment blast radius.", "suggested_steps": ["Rotate all secrets immediately", "Isolate all 4 CI runners", "Audit last 47 minutes of deployments"]},
+        {"action": "investigate", "confidence_score": 0.02, "reasoning": "Essentially zero probability that a post-install hook establishing a reverse shell is anything other than malicious.", "suggested_steps": ["Do not delay — rotate secrets while investigating"]},
+        {"action": "dismiss",     "confidence_score": 0.01, "reasoning": "Exfiltrated credentials make dismissal impossible to justify.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Insider Threat": [
+        {"action": "investigate", "confidence_score": 0.66, "reasoning": "No exfiltration detected and there may be a legitimate operational reason for the access — investigation is warranted before confrontation.", "suggested_steps": ["Revoke DBA privileges immediately", "Preserve session audit log", "Consult HR and Legal before contacting p.walsh"]},
+        {"action": "escalate",    "confidence_score": 0.27, "reasoning": "If the investigation confirms intent, rapid escalation to HR and Legal is required given the PIP context.", "suggested_steps": ["Prepare escalation brief for HR and Legal", "Ensure forensic preservation is complete"]},
+        {"action": "dismiss",     "confidence_score": 0.07, "reasoning": "14x baseline access to sensitive HR records outside business hours is not consistent with routine work.", "suggested_steps": ["Do not dismiss without explanation from account holder"]},
+    ],
+    "Command and Control - DNS Tunnelling": [
+        {"action": "escalate",    "confidence_score": 0.91, "reasoning": "312x DNS query baseline, base32-encoded subdomains, and a fresh C2 domain on an M&A host is definitive tunnelling — 6 hours of potential data loss.", "suggested_steps": ["Isolate WS-LEGAL-199 immediately", "Block tunnel-c2.xyz at resolver", "Engage IR and Legal for M&A data breach assessment"]},
+        {"action": "investigate", "confidence_score": 0.07, "reasoning": "Very small chance this is a misconfigured DNS-based monitoring tool — check with the M&A team.", "suggested_steps": ["Verify with legal team if any DNS monitoring tools are deployed", "Isolate while investigating"]},
+        {"action": "dismiss",     "confidence_score": 0.02, "reasoning": "9,847 TXT queries to a 11-day-old domain with base32-encoded subdomains has no benign explanation.", "suggested_steps": ["Do not dismiss"]},
+    ],
+    "Zero-Day Exploit Attempt": [
+        {"action": "escalate",    "confidence_score": 0.95, "reasoning": "Successful exploitation confirmed — reverse shell established, attacker commands observed, ELF dropper written to disk. Patch was available 18h ago.", "suggested_steps": ["Take WEB-APP-PROD-01 offline immediately", "Apply CVE-2025-XXXX patch before restart", "Preserve core dump and /tmp/.x for forensics"]},
+        {"action": "investigate", "confidence_score": 0.04, "reasoning": "Extremely low probability given confirmed post-exploitation artefacts.", "suggested_steps": ["Do not investigate in place — isolate first, then investigate"]},
+        {"action": "dismiss",     "confidence_score": 0.01, "reasoning": "Node_app writing and executing an ELF binary is impossible to dismiss as benign.", "suggested_steps": ["Do not dismiss"]},
+    ],
+}
+
+_DEFAULT_RANKED_MOCK = [
+    {"action": "investigate", "confidence_score": 0.65, "reasoning": "Alert contains suspicious indicators that warrant investigation before escalation.", "suggested_steps": ["Review all evidence entries", "Cross-reference source IP against threat intel"]},
+    {"action": "escalate",    "confidence_score": 0.25, "reasoning": "If investigation confirms malicious activity, escalation to IR is the next step.", "suggested_steps": ["Prepare IR brief", "Notify SOC manager"]},
+    {"action": "dismiss",     "confidence_score": 0.10, "reasoning": "Dismissal is only appropriate if investigation confirms a false positive.", "suggested_steps": ["Document reason for dismissal if chosen"]},
+]
+
+
+def _parse_ranked_response(raw_text: str) -> list[dict]:
+    """Parse a ranked_actions JSON response from the model."""
+    text = re.sub(r"```(?:json)?", "", raw_text).strip()
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        text = match.group(0)
+    try:
+        data = json.loads(text)
+        actions = data.get("ranked_actions", [])
+    except json.JSONDecodeError:
+        logger.warning("[watsonx_client] Could not parse ranked response: %r", raw_text[:200])
+        return _DEFAULT_RANKED_MOCK
+
+    normalised = []
+    valid_actions = {"investigate", "escalate", "dismiss"}
+    for item in actions:
+        action = str(item.get("action", "investigate")).lower().strip()
+        if action not in valid_actions:
+            continue
+        try:
+            score = float(item.get("confidence_score", 0.33))
+            score = max(0.0, min(1.0, score))
+        except (TypeError, ValueError):
+            score = 0.33
+        steps = item.get("suggested_steps", [])
+        if not isinstance(steps, list):
+            steps = [str(steps)]
+        steps = [str(s).strip() for s in steps if str(s).strip()][:3]
+        normalised.append({
+            "action": action,
+            "confidence_score": score,
+            "reasoning": str(item.get("reasoning", "")).strip(),
+            "suggested_steps": steps,
+        })
+
+    if not normalised:
+        return _DEFAULT_RANKED_MOCK
+
+    # Sort highest confidence first
+    normalised.sort(key=lambda x: x["confidence_score"], reverse=True)
+    return normalised
+
+
+def fallback_ranked_mock(scenario: dict) -> list[dict]:
+    """Return per-scenario ranked action mock data."""
+    alert_type = scenario.get("alert_type", "")
+    return list(_RANKED_MOCK.get(alert_type, _DEFAULT_RANKED_MOCK))
+
+
+def generate_ranked_actions(scenario: dict) -> list[dict]:
+    """
+    Generate a ranked list of all three response actions for a scenario.
+
+    Each action has its own confidence score, reasoning, and suggested steps,
+    allowing the analyst to see the full decision landscape rather than only
+    the top recommendation.
+
+    Parameters
+    ----------
+    scenario : dict
+        A scenario fixture dict as loaded by scenario_loader.
+
+    Returns
+    -------
+    list[dict]
+        List of 3 dicts sorted by confidence_score descending, each with keys:
+        action, confidence_score, reasoning, suggested_steps.
+    """
+    model = _get_model()
+    if model is None:
+        return fallback_ranked_mock(scenario)
+
+    prompt = _build_user_prompt(scenario)
+    full_prompt = f"{_RANKED_SYSTEM_PROMPT}\n\nUser:\n{prompt}\n\nAssistant:"
+
+    try:
+        response = model.generate_text(prompt=full_prompt)
+        return _parse_ranked_response(response)
+    except Exception as exc:
+        logger.warning(
+            "[watsonx_client] Ranked actions API call failed (%s) — using mock.", exc
+        )
+        return fallback_ranked_mock(scenario)
