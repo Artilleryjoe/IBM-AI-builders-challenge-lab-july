@@ -33,7 +33,7 @@ The plan was reviewed and a user-requested change was made (sub-task ordering) b
 
 Bob implemented all files in Sub-Task 1:
 - Designed and wrote three realistic threat scenario JSON fixtures (`scenario_001`, `scenario_002`, `scenario_003`) covering lateral movement, ransomware precursor, and credential stuffing scenarios with MITRE ATT&CK mappings and realistic timestamped evidence entries
-- Designed and implemented the `DecisionRecord` dataclass with SHA-256 tamper-evidence hashing, factory method, and JSON serialisation
+- Designed and implemented the `DecisionRecord` dataclass with SHAKE-256 (post-quantum-resilient) tamper-evidence hashing, factory method, and JSON serialisation
 - Implemented `scenario_loader.py` with module-level caching and graceful error handling
 - Ran a validation smoke-test and identified and fixed a cross-platform encoding issue with em-dash characters in the fixture titles
 

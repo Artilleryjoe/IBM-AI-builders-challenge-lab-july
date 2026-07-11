@@ -42,12 +42,12 @@ This document maps each IBM AI Builders Challenge judging criterion to the speci
 
 | Component | Technical Detail | Artefact |
 |---|---|---|
-| Data model | `DecisionRecord` dataclass with SHA-256 tamper-evidence hashing; factory method; JSON serialisation | `src/decision_record.py` |
+| Data model | `DecisionRecord` dataclass with SHAKE-256 (PQC-resilient) tamper-evidence hashing; factory method; JSON serialisation | `src/decision_record.py` |
 | AI integration | `ibm-watsonx-ai` SDK; structured JSON prompt; response parsing; mock fallback | `src/watsonx_client.py` |
 | Persistence | `ibm-cos-sdk-python` (ibm_boto3); object upload/list under `decisions/` prefix; local fallback | `src/cos_client.py` |
 | Orchestration | Thin `dal_engine.py` with no UI logic; clean separation of concerns | `src/dal_engine.py` |
 | UI | Streamlit app with session state management; colour-coded confidence badge; mandatory rationale | `app.py` |
-| Scenario data | 3 realistic JSON fixtures with MITRE ATT&CK mappings and timestamped evidence entries | `data/scenarios/` |
+| Scenario data | 10 realistic JSON fixtures with MITRE ATT&CK mappings and timestamped evidence entries | `data/scenarios/` |
 | Fallback resilience | Both IBM services degrade gracefully; demo works end-to-end without credentials | `src/watsonx_client.py`, `src/cos_client.py` |
 
 **Artefact:** All `src/` modules, `app.py`, `data/scenarios/`

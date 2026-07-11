@@ -102,7 +102,7 @@ Every `DecisionRecord` produced by this system is an instantiation of the framew
 
 **What it is:** The tamper-evident record that captures all four preceding elements as a single, versioned, hashed document persisted to IBM Cloud Object Storage (or `data/decisions/` in local fallback mode).
 
-**Why it matters:** The audit record is the DAL's primary deliverable. It is what makes AI-assisted decision-making reviewable, attributable, and defensible. The SHA-256 hash ensures that any post-save modification to any field is detectable — the Audit Log recomputes the hash on every review and surfaces a mismatch immediately.
+**Why it matters:** The audit record is the DAL's primary deliverable. It is what makes AI-assisted decision-making reviewable, attributable, and defensible. The SHAKE-256 (post-quantum-resilient) hash ensures that any post-save modification to any field is detectable — the Audit Log recomputes the hash on every review and surfaces a mismatch immediately.
 
 **Data fields (from `DecisionRecord`):**
 
@@ -110,7 +110,8 @@ Every `DecisionRecord` produced by this system is an instantiation of the framew
 |---|---|---|
 | `record_id` | `str` | UUID4 unique identifier for this decision record |
 | `timestamp` | `str` | UTC ISO-8601 timestamp of record creation |
-| `record_hash` | `str` | SHA-256 hex digest computed over all other fields (64 hex chars) |
+| `hash_algorithm` | `str` | Algorithm used to produce `record_hash` — default `"SHAKE-256"` (NIST FIPS 202) |
+| `record_hash` | `str` | 64-char hex digest computed over all other fields using `hash_algorithm` |
 
 **Hash computation:** The hash is computed over the canonical JSON serialisation of all `DecisionRecord` fields *except* `record_hash` itself, with keys sorted for determinism. The hash is then added to the record before saving. Any post-save mutation of any field will produce a different hash, making tampering detectable.
 
@@ -127,7 +128,7 @@ Every `DecisionRecord` produced by this system is an instantiation of the framew
 A `DecisionRecord` is **tamper-evident**, not immutable. The distinction matters:
 
 - **Immutable** would mean the record physically cannot be changed — requiring append-only storage, WORM policies, or cryptographic ledgers.
-- **Tamper-evident** means any change *can* be made to the stored file, but the change *cannot be hidden* — the SHA-256 hash will no longer match, and the system will detect and report the discrepancy.
+- **Tamper-evident** means any change *can* be made to the stored file, but the change *cannot be hidden* — the SHAKE-256 hash will no longer match, and the system will detect and report the discrepancy.
 
 The DAL uses the tamper-evident approach because it is simpler to implement and sufficient for the accountability use case: the goal is not to prevent tampering, but to make tampering visible during audit review.
 
@@ -138,7 +139,7 @@ Every time the Audit Log is loaded, `dal_engine.get_audit_log()` calls `Decision
 1. Takes the stored record dict (loaded from disk or IBM COS)
 2. Removes the `record_hash` field
 3. Serialises the remaining fields to JSON with keys sorted alphabetically
-4. Computes a fresh SHA-256 digest
+4. Computes a fresh SHAKE-256 digest
 5. Compares the result to the `record_hash` field that was written at save time
 
 If the two hashes match, the record is marked `integrity_valid = True`. If they differ, `integrity_valid = False`.
@@ -153,8 +154,8 @@ Each row in the Audit Log summary table includes an **Integrity** column:
 | `❌ Hash mismatch` | At least one field differs from the original. The stored hash and recomputed hash are shown side-by-side in the Full Record Inspector. |
 
 The Full Record Inspector displays:
-- The **stored hash** — the SHA-256 digest written at save time
-- The **recomputed hash** — the SHA-256 digest computed now from the current field values
+- The **stored hash** — the SHAKE-256 digest written at save time
+- The **recomputed hash** — the SHAKE-256 digest computed now from the current field values
 - A clear pass/fail status with an explanation
 
 ### Manual Tamper Test
@@ -193,7 +194,7 @@ The verification logic in `DecisionRecord.verify_record_dict()` and `compute_has
 |         (approve / reject / override + rationale)               |
 |                         |                                        |
 |              [5. Audit Record]                                   |
-|         (SHA-256 hashed, persisted to IBM COS)                   |
+|         (SHAKE-256 hashed, persisted to IBM COS)                 |
 +------------------------------------------------------------------+
 ```
 

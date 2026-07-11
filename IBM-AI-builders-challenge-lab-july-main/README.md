@@ -12,7 +12,7 @@
 
 The **Decision Assurance Layer (DAL)** is a prototype that inserts a structured accountability checkpoint between AI-generated threat recommendations and human SOC analyst decisions.
 
-The AI analyses the alert. The analyst reviews the evidence and AI output side-by-side. They make an explicit **Approve / Reject / Override** decision with a documented rationale. An immutable, SHA-256-hashed `DecisionRecord` is saved to IBM Cloud Object Storage.
+The AI analyses the alert. The analyst reviews the evidence and AI output side-by-side. They make an explicit **Approve / Reject / Override** decision with a documented rationale. An immutable, SHAKE-256-hashed `DecisionRecord` is saved to IBM Cloud Object Storage.
 
 Every record captures five elements — none are optional:
 
@@ -22,7 +22,7 @@ Every record captures five elements — none are optional:
 | **AI Recommendation** | Action recommended by IBM watsonx.ai (Granite) with reasoning |
 | **Uncertainty Score** | Confidence score (0.0–1.0) visualised as a colour-coded badge |
 | **Human Judgment** | Analyst action + mandatory rationale (approve / reject / override) |
-| **Audit Record** | SHA-256-hashed `DecisionRecord` persisted to IBM Cloud Object Storage |
+| **Audit Record** | SHAKE-256-hashed `DecisionRecord` persisted to IBM Cloud Object Storage |
 
 ---
 
@@ -126,7 +126,7 @@ Both IBM services degrade gracefully — the app runs fully offline with mock re
 │   └── scenarios/                      # 10 threat scenario fixtures (JSON)
 └── src/
     ├── scenario_loader.py              # Loads scenario fixtures
-    ├── decision_record.py              # DecisionRecord dataclass + SHA-256 hash
+    ├── decision_record.py              # DecisionRecord dataclass + SHAKE-256 hash (PQC-resilient)
     ├── watsonx_client.py               # IBM watsonx.ai (Granite) wrapper
     ├── cos_client.py                   # IBM Cloud Object Storage wrapper
     └── dal_engine.py                   # Orchestration layer
@@ -203,7 +203,7 @@ pip install jupyter
 jupyter notebook notebooks/dal_walkthrough.ipynb
 ```
 
-The notebook includes a **tamper simulation** — it modifies a saved record and demonstrates that the SHA-256 hash mismatch is immediately detected.
+The notebook includes a **tamper simulation** — it modifies a saved record and demonstrates that the SHAKE-256 hash mismatch is immediately detected.
 
 ---
 

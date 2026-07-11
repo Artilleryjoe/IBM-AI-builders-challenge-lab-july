@@ -97,7 +97,7 @@
 - Each `DecisionRecord` contains all five DAL elements in a single, self-contained JSON document
 - The record includes the AI recommendation, confidence score, reasoning, analyst action, rationale, and a tamper-evident hash
 - The record is persisted to IBM Cloud Object Storage and can be retrieved by `record_id`
-- The SHA-256 hash of the record can be independently verified against the stored content
+- The SHAKE-256 hash of the record can be independently verified against the stored content
 
 ---
 

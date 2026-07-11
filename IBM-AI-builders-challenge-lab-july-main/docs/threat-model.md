@@ -90,6 +90,48 @@ The following threats are acknowledged but explicitly out of scope for the MVP:
 
 ---
 
+## Boundary 6 — Post-Quantum Threat to Audit Record Integrity
+
+**Description:** Decision records are protected by a cryptographic hash. A sufficiently
+powerful quantum computer could theoretically attack the hash function, undermining the
+tamper-evidence guarantee that is central to the DAL's accountability story.
+
+**Quantum threat analysis:**
+
+| Hash function | Classical security | Quantum security (Grover) | Status |
+|---|---|---|---|
+| SHA-256 | 256-bit | ~128-bit effective (halved by Grover's algorithm) | Vulnerable to harvest-now-decrypt-later |
+| SHAKE-256 (XOF, SHA-3 family) | 256-bit | ~256-bit — XOF output length is not halved by Grover in the same way as fixed-output hashes | **Used by the DAL** |
+
+**Why SHAKE-256:**
+
+SHAKE-256 is an extendable output function (XOF) from the SHA-3 family, standardised by NIST under FIPS 202 (2015) and referenced in NIST's post-quantum cryptography guidance. Unlike SHA-256, SHAKE-256 does not use the Merkle-Damgard construction that Grover's algorithm most efficiently attacks. At a 256-bit output length, SHAKE-256 provides full quantum preimage resistance — the same 256-bit digest length, the same 64-character hex wire format, zero change to storage or transmission infrastructure.
+
+**Implementation:** The DAL uses SHAKE-256 as its sole hash algorithm for all new records, declared via the `HASH_ALGORITHM = "SHAKE-256"` constant in `src/decision_record.py`. Every saved record includes a `hash_algorithm` field making it self-describing — if the algorithm is ever upgraded again, older records can still be verified against their original algorithm.
+
+**Legacy compatibility:** The `compute_hash_for_dict()` method reads the `hash_algorithm` field from each record before recomputing. Records saved before the PQC upgrade (which would carry `"SHA-256"` or no `hash_algorithm` field) are verified using SHA-256, preserving backward compatibility of the audit log.
+
+**Threats and mitigations:**
+
+| Threat | Description | Mitigation |
+|---|---|---|
+| **Harvest now, attack later** | An adversary records `record_hash` values today and attempts to forge a colliding record once a cryptographically-relevant quantum computer exists. | SHAKE-256 provides ~256-bit quantum preimage resistance, making preimage attacks against stored hashes computationally infeasible even under quantum threat models. |
+| **Algorithm agility gap** | A future NIST guidance revision deprecates SHAKE-256 in favour of a new algorithm. | The `hash_algorithm` field on each record enables per-record algorithm selection. Migrating to a new algorithm requires only a new branch in `compute_hash_for_dict()` — no schema migration needed. |
+| **Signature absence** | The hash proves the record was not modified, but does not prove who created it. A quantum-capable adversary who can forge the analyst's identity could create a plausible record from scratch. | Non-repudiation requires a digital signature scheme. Post-quantum signature (CRYSTALS-Dilithium / ML-DSA under FIPS 204) is the recommended future upgrade path. |
+
+**Future upgrade path — post-quantum digital signatures:**
+
+The current implementation provides tamper-evidence (hash-based). The next hardening step
+is non-repudiation (signature-based): each record signed by the analyst's private key
+using ML-DSA (CRYSTALS-Dilithium, NIST FIPS 204). This would make it cryptographically
+impossible to deny or forge a decision record, even against a quantum adversary.
+
+The `hash_algorithm` field is already a placeholder for this extensibility —
+a future `signature_algorithm` field and `record_signature` field follow the same
+self-describing pattern.
+
+---
+
 ## Production Hardening Checklist
 
 Items to address before any production deployment:
@@ -102,3 +144,5 @@ Items to address before any production deployment:
 - [ ] Add TLS for all API calls (enforced by IBM SDK by default; verify in deployment)
 - [ ] Add rate limit and timeout controls to the watsonx.ai client
 - [ ] Replace hardcoded `analyst_id` with session-bound identity
+- [x] Upgrade record hash from SHA-256 to SHAKE-256 (post-quantum-resilient) — **done**
+- [ ] Add post-quantum digital signatures (ML-DSA / CRYSTALS-Dilithium, NIST FIPS 204)

@@ -71,7 +71,7 @@ The analyst sees a structured workbench:
 - A confidence badge coloured amber or red when the AI is uncertain
 - A mandatory rationale field before any action can be submitted
 
-The analyst reviews, agrees with the AI, types their reasoning, and clicks **Approve**. The DAL creates a `DecisionRecord` containing all of the above, computes a SHA-256 hash of the record content, and persists it to IBM Cloud Object Storage. The record cannot be silently altered after the fact.
+The analyst reviews, agrees with the AI, types their reasoning, and clicks **Approve**. The DAL creates a `DecisionRecord` containing all of the above, computes a SHAKE-256 hash (post-quantum-resilient) of the record content, and persists it to IBM Cloud Object Storage. The record cannot be silently altered after the fact.
 
 **The result:** A reviewable, auditable trail of exactly what was known, what was recommended, and what was decided — at the moment of decision.
 
@@ -87,7 +87,7 @@ Every decision passing through the DAL is structured around five elements:
 | **AI Recommendation** | The action recommended (investigate / escalate / dismiss) with supporting reasoning |
 | **Uncertainty Score** | A confidence score (0.0-1.0) that explicitly communicates AI uncertainty to the analyst |
 | **Human Judgment** | The analyst's action (approve / reject / override), rationale, and override description |
-| **Audit Record** | The immutable, SHA-256-hashed `DecisionRecord` persisted to IBM Cloud Object Storage |
+| **Audit Record** | The immutable, SHAKE-256-hashed `DecisionRecord` persisted to IBM Cloud Object Storage |
 
 These five elements are the schema backbone of the entire system. They appear in the data model, the UI, the documentation, and the framework.
 

@@ -193,7 +193,7 @@ with tab_workbench:
                 st.markdown(f"**Saved to:** IBM Cloud Object Storage")
                 st.code(f"decisions/{rec.record_id}.json", language=None)
 
-        st.markdown(f"**SHA-256 Hash:**")
+        st.markdown(f"**SHAKE-256 Hash (PQC-resilient):**")
         st.code(rec.record_hash, language=None)
         st.caption(
             "This hash was computed over the full record content before saving. "
@@ -467,7 +467,7 @@ with tab_audit:
     st.caption(
         "All saved decision records — fetched live from storage on every page load. "
         "Each record contains the full DAL evidence bundle, AI recommendation, "
-        "analyst judgment, and a SHA-256 tamper-evident hash."
+        "analyst judgment, and a SHAKE-256 (post-quantum-resilient) tamper-evident hash."
     )
 
     # Storage location note
@@ -608,9 +608,10 @@ with tab_audit:
                 )
             else:
                 st.caption(
-                    "The SHA-256 hash was computed at save time over all record fields "
-                    "except `record_hash` itself, with keys sorted alphabetically. "
-                    "Any post-save change to any field will produce a different digest."
+                    "The SHAKE-256 (post-quantum-resilient) hash was computed at save time "
+                    "over all record fields except `record_hash` itself, with keys sorted "
+                    "alphabetically. Any post-save change to any field will produce a "
+                    "different digest."
                 )
 
             with st.expander("Raw JSON Record"):

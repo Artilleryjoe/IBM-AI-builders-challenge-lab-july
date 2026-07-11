@@ -96,7 +96,7 @@ Clicking **Submit Decision** calls `dal_engine.submit_decision(scenario_id, anal
 ### Step 5 — Record Creation and Persistence
 `dal_engine.submit_decision` assembles a `DecisionRecord` via `DecisionRecord.create()`:
 - Stamps `record_id` (UUID4) and `timestamp` (UTC ISO-8601)
-- Computes `record_hash` (SHA-256 over all fields except the hash itself, keys sorted)
+- Computes `record_hash` (SHAKE-256 over all fields except the hash itself, keys sorted — PQC-resilient)
 
 The completed record is passed to `cos_client.save_decision_record(record)`, which uploads it to IBM COS under `decisions/{record_id}.json`. If COS is unavailable, the local fallback saves it to `data/decisions/{record_id}.json`.
 

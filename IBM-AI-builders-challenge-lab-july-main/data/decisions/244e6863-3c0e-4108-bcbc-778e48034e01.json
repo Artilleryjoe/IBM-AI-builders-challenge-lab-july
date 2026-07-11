@@ -1,0 +1,20 @@
+{
+  "ai_confidence": 0.87,
+  "ai_reasoning": "The evidence shows a service account performing an SMB subnet sweep outside business hours, followed by successful authentication to multiple hosts and a credential dump attempt on a high-value finance workstation. This pattern is highly consistent with active lateral movement by a compromised account.",
+  "ai_recommendation": "escalate",
+  "ai_suggested_actions": [
+    "Isolate source host 10.0.4.88 from the network immediately",
+    "Revoke and reset the svc_backup service account credentials",
+    "Deploy EDR hunt across 10.0.4.0/24 for PSEXESVC.exe and lsass access artefacts"
+  ],
+  "analyst_action": "approve",
+  "analyst_id": "analyst_01",
+  "analyst_rationale": "Smoke test confirmed valid threat.",
+  "hash_algorithm": "SHAKE-256",
+  "override_description": null,
+  "record_hash": "64f30535c54a8e97cf69fce0dbb0ba1fbc1a40157d16402cce8403efe2bdc6e9",
+  "record_id": "244e6863-3c0e-4108-bcbc-778e48034e01",
+  "scenario_id": "scenario_002",
+  "scenario_title": "Ransomware Precursor \u2014 Suspicious Script Execution and Shadow Copy Deletion",
+  "timestamp": "2026-07-11T02:52:20.341531+00:00"
+}

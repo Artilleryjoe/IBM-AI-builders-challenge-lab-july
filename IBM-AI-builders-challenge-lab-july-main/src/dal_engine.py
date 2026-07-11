@@ -168,9 +168,9 @@ def get_audit_log() -> list[dict]:
     without performing its own crypto:
 
         integrity_valid : bool   True if the record has not been modified
-                                 since it was originally saved.
-        computed_hash   : str    SHA-256 digest recomputed now from the
-                                 stored fields (excluding record_hash).
+                                  since it was originally saved.
+        computed_hash   : str    SHAKE-256 (or SHA-256 for legacy) digest recomputed
+                                  now from the stored fields (excluding record_hash).
         stored_hash     : str    The hash value written at save time.
 
     Returns
